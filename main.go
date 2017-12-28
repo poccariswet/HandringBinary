@@ -18,10 +18,19 @@ func main() {
 	}
 
 	buf := make([]byte, f.Size())
-	read_size, err := file.Read(buf)
+	_, err = file.Read(buf)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(read_size, "bytes read.", string(buf))
-	fmt.Printf("%x\n", buf)
+
+	var c int
+	for i, _ := range buf {
+		if fmt.Sprintf("%x", buf[i]) == "5c" {
+			c = i + 1
+			break
+		}
+	}
+
+	a := buf[c:]
+	fmt.Printf("%x", a)
 }
