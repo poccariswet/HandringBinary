@@ -12,12 +12,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	buf := make([]byte, 256)
+	f, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	buf := make([]byte, f.Size())
 	read_size, err := file.Read(buf)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(read_size, "bytes read.", string(buf))
 	fmt.Printf("%x\n", buf)
-
 }
