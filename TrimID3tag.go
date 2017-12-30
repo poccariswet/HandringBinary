@@ -35,7 +35,7 @@ func main() {
 		go func(fname, tempdir string) {
 			defer wg.Done()
 
-			buf, err := AACRead(fname)
+			buf, err := AACtoByte(fname)
 			if err != nil {
 				errChan <- err
 			}
@@ -81,7 +81,7 @@ func TempDiraac() (string, error) {
 	return aacDir, nil
 }
 
-func AACRead(fname string) ([]byte, error) {
+func AACtoByte(fname string) ([]byte, error) {
 	fpath := filepath.Join(aacDir, fname)
 	file, err := os.Open(fpath)
 	if err != nil {
