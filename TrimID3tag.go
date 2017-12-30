@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 )
@@ -16,8 +17,9 @@ var (
 
 func main() {
 	var (
-		wg      sync.WaitGroup
-		errChan = make(chan error, 1)
+		wg       sync.WaitGroup
+		errChan  = make(chan error, 1)
+		filename = "bananamoon"
 	)
 
 	files, err := ioutil.ReadDir(aacDir)
@@ -29,6 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer os.RemoveAll(tempdir)
 
 	for _, f := range files {
 		wg.Add(1)
@@ -42,7 +45,7 @@ func main() {
 
 			c := 0
 			for i, _ := range buf {
-				if fmt.Sprintf("%x", buf[i]) == "5c" {
+				if fmt.Sprintf("%x", buf[i]) == "5c" && fmt.Sprintf("%x", buf[i+1]) == "ff" {
 					c = i + 1
 					break
 				}
@@ -59,6 +62,10 @@ func main() {
 	default:
 	}
 	wg.Wait()
+
+	if err := RemakeAAC(filename, tempdir); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func createAAC(name string, bf []byte) error {
@@ -99,4 +106,30 @@ func AACtoByte(fname string) ([]byte, error) {
 		return nil, err
 	}
 	return buf, nil
+}
+
+func RemakeAAC(filename, fpath string) error {
+	cmdPath, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		return err
+	}
+
+	files, err := ioutil.ReadDir(fpath)
+	if err != nil {
+		return err
+	}
+
+	var res []byte
+	for _, f := range files {
+		res = append(res, f.Name()...)
+		res = append(res, '|')
+	}
+	name := fmt.Sprintf("concat:%s", string(res[:len(res)-1]))
+
+	aacFile := filepath.Join(HomePath, "Output", filename)
+	cmd := exec.Command(cmdPath, "-i", name, "-c", "copy", fmt.Sprintf("%s.aac", aacFile))
+	cmd.Dir = fpath
+	cmd.Run()
+
+	return nil
 }
